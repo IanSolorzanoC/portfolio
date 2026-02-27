@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "title": "No puedo entrar a mi cuenta",
+    "description": "Me dice contraseña incorrecta",
+    "priority": "High",
+    "category": "",
+    "status": "open"
+  },
+  {
+    "id": 2,
+    "title": "Laptop no enciende",
+    "description": "La pantalla queda negra",
+    "priority": "Medium",
+    "category": "",
+    "status": "open"
+  },
+  {
+    "id": 3,
+    "title": "VPN no conecta",
+    "description": "El cliente VPN no levanta y no tengo internet",
+    "priority": "High",
+    "category": "",
+    "status": "open"
+  },
+  {
+    "id": 4,
+    "title": "Teams no abre",
+    "description": "El software de Teams se cierra al iniciar",
+    "priority": "Low",
+    "category": "",
+    "status": "open"
+  },
+  {
+    "id": 5,
+    "title": "Sin acceso a carpeta compartida",
+    "description": "Access denied al abrir la carpeta del proyecto",
+    "priority": "Medium",
+    "category": "",
+    "status": "open"
+  },
+  {
+    "id": 6,
+    "title": "Mouse intermitente",
+    "description": "El mouse deja de responder a ratos",
+    "priority": "Low",
+    "category": "",
+    "status": "open"
+  }
+]

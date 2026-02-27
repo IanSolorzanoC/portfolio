@@ -1,1 +1,37 @@
-
+[
+  {
+    "username": "jperez",
+    "name": "Juan Perez",
+    "active": true,
+    "locked": false,
+    "password_reset": false
+  },
+  {
+    "username": "mlopez",
+    "name": "Maria Lopez",
+    "active": false,
+    "locked": true,
+    "password_reset": false
+  },
+  {
+    "username": "arodriguez",
+    "name": "Ana Rodriguez",
+    "active": true,
+    "locked": false,
+    "password_reset": false
+  },
+  {
+    "username": "cfernandez",
+    "name": "Carlos Fernandez",
+    "active": false,
+    "locked": false,
+    "password_reset": false
+  },
+  {
+    "username": "lmartinez",
+    "name": "Laura Martinez",
+    "active": true,
+    "locked": true,
+    "password_reset": false
+  }
+]
