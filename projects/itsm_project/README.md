@@ -1,110 +1,123 @@
 # ITSM L1 Automator
 
-Proyecto práctico orientado a un rol de **Analista de Soporte TI / Service Desk Nivel 1**.  
-Simula el ciclo básico de atención de incidencias: recepción de tickets, clasificación inicial, ejecución de acciones típicas L1 y cierre con resolución documentada.
+Practical project oriented toward an **IT Support Analyst / Level 1 Service Desk** role.  
+It simulates the basic incident handling lifecycle: ticket intake, initial classification, execution of typical L1 actions, and closure with documented resolution.
 
-El objetivo del proyecto es demostrar comprensión real de **flujos ITSM**, atención a usuarios y operaciones comunes de soporte en entornos corporativos.
-
----
-
-## Flujo típico de soporte (L1)
-1. Usuario reporta una incidencia (ticket).
-2. El sistema sugiere una clasificación inicial según la descripción.
-3. El analista ejecuta acciones comunes de Soporte TI Nivel 1.
-4. El ticket se documenta y se cierra con una resolución.
+The goal of this project is to demonstrate real understanding of **ITSM workflows**, user support processes, and common support operations in corporate environments.
 
 ---
 
-## Qué demuestra este proyecto
-- Gestión básica de tickets y estados de resolución.
-- Ejecución de acciones típicas de Soporte TI Nivel 1 (reset de contraseña, activación de usuario, desbloqueo de cuenta).
-- Clasificación inicial de incidencias por palabras clave.
-- Visualización de tickets y métricas operativas en un dashboard.
-- Consumo de servicios mediante API REST.
+## Typical Support Flow (L1)
+
+1. A user reports an incident (ticket).
+2. The system suggests an initial classification based on the description.
+3. The analyst performs common Level 1 IT Support actions.
+4. The ticket is documented and closed with a resolution.
 
 ---
 
-## Características principales
-- Backend FastAPI con acciones L1 (reset de contraseña, activación de usuario, desbloqueo de cuenta y cierre de tickets).
-- Motor de clasificación basado en palabras clave.
-- Dashboard desarrollado en Streamlit con tabla de tickets y panel de métricas.
-- Datos de ejemplo en formato JSON para tickets y usuarios.
-- Endpoints listos para ser consumidos vía REST.
+## What This Project Demonstrates
+
+- Basic ticket management and resolution status handling.
+- Execution of common Level 1 IT Support actions (password reset, user activation, account unlock).
+- Initial incident classification using keyword-based logic.
+- Ticket visualization and operational metrics in a dashboard.
+- API-based service consumption through REST endpoints.
 
 ---
 
-## Instalación y ejecución
+## Main Features
+
+- FastAPI backend with L1 actions (password reset, user activation, account unlock, and ticket closure).
+- Keyword-based classification engine.
+- Dashboard developed in Streamlit with ticket table and metrics panel.
+- Sample data in JSON format for tickets and users.
+- REST-ready endpoints.
+
+---
+
+## Installation and Execution
 
 ### Backend (FastAPI)
-1. Crear un entorno virtual (opcional) e instalar dependencias:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Ejecutar el servidor:
-   ```bash
-   uvicorn backend.app:app --reload --port 8000
-   ```
-3. Documentación interactiva disponible en:  
-   `http://localhost:8000/docs`
+
+1. Create a virtual environment (optional) and install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+2. Run the server:
+
+```bash
+uvicorn backend.app:app --reload --port 8000
+```
+
+3. Interactive documentation available at:  
+`http://localhost:8000/docs`
 
 ---
 
 ### Frontend (Streamlit)
-1. En otra terminal, ejecutar el dashboard:
-   ```bash
-   streamlit run frontend/dashboard.py
-   ```
-2. Si el backend no corre en `http://localhost:8000`, exportar la variable de entorno:
-   ```bash
-   $env:API_BASE_URL="http://<host>:<port>"
-   streamlit run frontend/dashboard.py
-   ```
 
+1. In another terminal, run the dashboard:
 
----
+```bash
+streamlit run frontend/dashboard.py
+```
 
-## Ejemplos de endpoints
-- **Listar tickets**  
-  `GET /tickets`
+2. If the backend is not running on `http://localhost:8000`, set the environment variable:
 
-- **Clasificar ticket (sugerencia)**  
-  `POST /classify`  
-  Body:
-  ```json
-  { "description": "No puedo entrar al sistema" }
-  ```
-
-- **Reset de contraseña**  
-  `POST /actions/reset-password`  
-  Body:
-  ```json
-  { "username": "jperez" }
-  ```
-
-- **Activar usuario**  
-  `POST /actions/activate-user`  
-  Body:
-  ```json
-  { "username": "mlopez" }
-  ```
-
-- **Desbloquear cuenta**  
-  `POST /actions/unlock-account`  
-  Body:
-  ```json
-  { "username": "lmartinez" }
-  ```
-
-- **Cerrar ticket**  
-  `POST /actions/close-ticket`  
-  Body:
-  ```json
-  { "ticket_id": 1, "resolution": "Contraseña reiniciada" }
-  ```
+```bash
+$env:API_BASE_URL="http://<host>:<port>"
+streamlit run frontend/dashboard.py
+```
 
 ---
 
-## Estructura del repositorio
+## Example Endpoints
+
+### List tickets
+`GET /tickets`
+
+### Classify ticket (suggestion)
+`POST /classify`
+
+```json
+{ "description": "I cannot log into the system" }
+```
+
+### Reset password
+`POST /actions/reset-password`
+
+```json
+{ "username": "jperez" }
+```
+
+### Activate user
+`POST /actions/activate-user`
+
+```json
+{ "username": "mlopez" }
+```
+
+### Unlock account
+`POST /actions/unlock-account`
+
+```json
+{ "username": "lmartinez" }
+```
+
+### Close ticket
+`POST /actions/close-ticket`
+
+```json
+{ "ticket_id": 1, "resolution": "Password reset completed" }
+```
+
+---
+
+## Repository Structure
+
 ```text
 itsm-l1-automator/
 ├── backend/
@@ -123,16 +136,14 @@ itsm-l1-automator/
 
 ---
 
-## Roadmap (mejoras futuras)
-- Persistencia con base de datos y auditoría de acciones.
-- Autenticación básica en el backend y control de acceso.
-- Creación y edición de tickets desde el dashboard.
-- Integración con herramientas reales de ITSM (Jira, ServiceNow, etc.).
-- Pruebas automatizadas (unitarias y end-to-end).
+## Roadmap (Future Improvements)
 
----
-
-## Notas finales
-- Los datos en JSON son simulados y pueden resetearse manualmente para nuevas pruebas.
-- La clasificación utiliza una heurística simple por palabras clave; puede ampliarse con reglas más complejas o ML.
-- El dashboard está pensado para demos locales; ajustar `API_BASE_URL` según el entorno de despliegue.
+- Database persistence and action auditing.
+- Basic backend authentication and access control.
+- Ticket creation and editing from the dashboard.
+- Integration with real ITSM tools (Jira, ServiceNow, etc.).
+- Automated testing (unit and end-to-end).
+## Final Notes
+- Data in JSON is simulated and can be manually reset for new testing.
+- Classification uses a simple keyword heuristic; can be extended with more complex rules or ML.
+- The board is intended for local demonstrations; adjust `API_BASE_URL` according to the deployment environment.
