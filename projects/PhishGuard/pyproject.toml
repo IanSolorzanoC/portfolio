@@ -1,0 +1,17 @@
+﻿[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phishguard"
+version = "0.1.0"
+description = "PhishGuard - Automated URL Threat Analyzer"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "requests>=2.31.0",
+  "streamlit>=1.31.0",
+]
+
+[tool.setuptools]
+packages = ["core", "interfaces", "utils"]
