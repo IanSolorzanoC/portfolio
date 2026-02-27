@@ -1,121 +1,113 @@
-# Implementación de OpenLDAP y Active Directory para la gestión de identidades
+# Implementation of OpenLDAP and Active Directory for Identity Management
 
-La gestión de identidades y accesos (IAM, por sus siglas en inglés) es un componente esencial en la ciberseguridad moderna. A través de políticas, procesos y tecnologías, permite a las organizaciones administrar usuarios, credenciales y permisos de manera centralizada, segura y eficiente.
+Identity and Access Management (IAM) is an essential component of modern cybersecurity. Through policies, processes, and technologies, it enables organizations to manage users, credentials, and permissions in a centralized, secure, and efficient manner.
 
-En este trabajo se documenta la implementación de dos soluciones ampliamente utilizadas en entornos empresariales: **[OpenLDAP](https://www.openldap.org/)** en Linux Ubuntu y Active Directory en Windows Server.
-
----
-
-## Importancia de la gestión de identidades
-
-La adopción de un sistema IAM no solo fortalece la seguridad, también mejora la productividad y el cumplimiento normativo.
-
-- **Eficiencia operativa**: unifica la gestión de accesos y facilita el uso de Single Sign-On (SSO).  
-- **Reducción del riesgo humano**: las políticas de autenticación robustas previenen brechas de seguridad derivadas de errores de usuarios.  
-- **Cumplimiento de normativas**: permite aplicar políticas de seguridad de forma centralizada y facilita las auditorías.  
-
-**Imagen 1 (diagrama de IAM en la empresa)**  
+This project documents the implementation of two widely used enterprise solutions: **[OpenLDAP](https://www.openldap.org/)** on Ubuntu Linux and Active Directory on Windows Server.
 
 ---
 
-## Implementación de OpenLDAP en Ubuntu Server
+## Importance of Identity Management
 
-**Entorno de laboratorio**
+Adopting an IAM system not only strengthens security, but also improves productivity and regulatory compliance.
+
+- **Operational efficiency**: centralizes access management and facilitates the use of Single Sign-On (SSO).  
+- **Reduction of human risk**: robust authentication policies prevent security breaches caused by user errors.  
+- **Regulatory compliance**: enables centralized enforcement of security policies and simplifies audits.  
+
+**Image 1 (IAM diagram within the enterprise)**  
+
+---
+
+## OpenLDAP Implementation on Ubuntu Server
+
+**Lab Environment**
 
 - Ubuntu Server 22.04 LTS  
 - 2 GB RAM, 1 vCPU, 127 GB HDD  
-- Red NAT  
+- NAT network  
 
-**Instalación y configuración básica**
+**Installation and Basic Configuration**
 
-1. Configuración inicial de zona horaria y apertura de puertos (22 para SSH, 389 para LDAP).  
-2. Instalación con:  
+1. Initial configuration of time zone and opening required ports (22 for SSH, 389 for LDAP).  
+2. Installation with:  
 
    ```bash
    sudo apt install slapd ldap-utils
    ```
-3. Definición del dominio dc=Cybersec2lab,dc=net.
+3. Domain definition: `dc=Cybersec2lab,dc=net`.
 
-4. Creación de Unidades Organizacionales (OUs) y grupos por departamentos como IT, RRHH y Ventas.
+4. Creation of Organizational Units (OUs) and departmental groups such as IT, HR, and Sales.
    
 <img width="569" height="517" alt="image" src="https://github.com/user-attachments/assets/79719392-b967-4026-86ef-9cb0bdb7b4df" />
 
-## Políticas de contraseñas
+## Password Policies
 
-Se habilitó el módulo ppolicy con las siguientes condiciones:
+The **ppolicy** module was enabled with the following conditions:
 
-- Contraseñas de al menos 8 caracteres.
+- Minimum password length of 8 characters.
+- History of 5 previous passwords.
+- Mandatory password change at first login.
+- Configured password expiration.
 
-- Historial de 5 contraseñas previas.
+## Administration with phpLDAPadmin
 
-- Cambio obligatorio en el primer inicio de sesión.
+Management was carried out through the graphical interface **phpLDAPadmin**, accessed via an **SSH tunnel** on local port `8080`.  
+During the process, security policies were validated when creating test users.
 
-- Caducidad configurada para las contraseñas.
+---
 
+# Active Directory Implementation on Windows Server
 
-## Administración con phpLDAPadmin
+### 1. Server Preparation
 
-La gestión se realizó mediante la interfaz gráfica **phpLDAPadmin**, accediendo a través de un **túnel SSH** en el puerto local `8080`.  
-Durante el proceso se validaron las políticas de seguridad al crear usuarios de prueba.
-
-
-### 1. Preparación del servidor
-
-- Configuración del **nombre de equipo** e **IP estática**.  
-- Habilitación de puertos esenciales:
+- Configuration of the **hostname** and **static IP address**.  
+- Enabling essential ports:
   - **LDAP (389)**
   - **Kerberos (88)**
   - **DNS (53)**
   - **RDP (3389)**
 
+### 2. Installation and Configuration
 
-### 2. Instalación y configuración
-
-1. Instalación de Active Directory Domain Services.  
-2. Promoción del servidor a Domain Controller, creando un nuevo bosque y dominio.  
-3. Configuración de la contraseña para el modo de recuperación DSRM.  
+1. Installation of Active Directory Domain Services.  
+2. Promotion of the server to Domain Controller, creating a new forest and domain.  
+3. Configuration of the DSRM recovery mode password.  
 
 <img width="624" height="431" alt="image" src="https://github.com/user-attachments/assets/32254deb-6043-4540-8769-41f4e4451f0b" />
 
+### 3. Organization and Policies
 
-
-### 3. Organización y políticas
-
-- Se crearon OUs para los departamentos:
+- OUs were created for the following departments:
   - IT  
-  - RRHH  
-  - Ventas  
-  - Contabilidad  
-  - Gerencia  
+  - HR  
+  - Sales  
+  - Accounting  
+  - Management  
 
-- Los usuarios se agruparon en grupos globales de acuerdo a cada departamento.  
+- Users were grouped into global groups according to each department.  
 
-### Políticas aplicadas mediante Group Policy Management
+### Policies Applied through Group Policy Management
 
-- Contraseñas de mínimo 8 caracteres con complejidad habilitada.  
-- Historial de 5 contraseñas previas.  
-- Caducidad cada 90 días.  
+- Minimum password length of 8 characters with complexity enabled.  
+- History of 5 previous passwords.  
+- Password expiration every 90 days.  
 
 <img width="266" height="163" alt="Captura de pantalla 2025-09-06 214604" src="https://github.com/user-attachments/assets/b192bc65-0c8e-465a-9818-c8b972a6c7b0" />
 
+## Remote Administration
 
-## Administración remota
-
-La administración se validó con la instalación de RSAT (Remote Server Administration Tools)
- y el uso de RDP, comprobando la gestión remota de usuarios y políticas.
-
+Administration was validated through the installation of RSAT (Remote Server Administration Tools) and the use of RDP, confirming remote management of users and policies.
 
 <img width="1536" height="1024" alt="686286b2-2a73-4ea0-80eb-faa8cdd6ee66" src="https://github.com/user-attachments/assets/59f13205-f779-46ff-b0a1-f103b1332aab" />
 
-
 ---
 
-## Conclusiones
+## Conclusions
 
-La implementación de OpenLDAP y Active Directory demuestra cómo ambas tecnologías cumplen con el objetivo de centralizar la gestión de identidades, aunque cada una con un enfoque distinto:
+The implementation of OpenLDAP and Active Directory demonstrates how both technologies fulfill the objective of centralizing identity management, although each follows a different approach:
 
-- OpenLDAP ofrece flexibilidad, personalización y es ideal en entornos Linux con un fuerte enfoque en software libre.
+- OpenLDAP offers flexibility and customization, making it ideal for Linux environments with a strong open-source focus.
 
-- Active Directory se integra de manera natural en ecosistemas Windows y ofrece herramientas de gestión más intuitivas.
+- Active Directory integrates naturally within Windows ecosystems and provides more intuitive management tools.
 
-Ambas soluciones representan pilares en la estrategia de ciberseguridad de cualquier organización que busque robustecer el control de accesos e identidades.
+Both solutions represent foundational pillars in the cybersecurity strategy of any organization seeking to strengthen identity and access control.
