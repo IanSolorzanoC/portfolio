@@ -8,7 +8,7 @@ This lab simulates a login API protected with multiple defensive layers includin
 
 # Architecture
 
-![Architecture](https://raw.githubusercontent.com/IanSolorzanoC/portfolio/main/projects/aws-secure-login-lab/architecture/architecture.png)
+![Architecture](architecture/architecture.png)
 
 Flow:
 
