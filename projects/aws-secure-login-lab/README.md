@@ -8,7 +8,7 @@ This lab simulates a login API protected with multiple defensive layers includin
 
 # Architecture
 
-![Architecture](architecture/architecture.png)
+![Architecture](./architecture/architecture.png)
 
 Flow:
 
@@ -47,7 +47,7 @@ API Gateway throttling limits request rates.
 
 Example configuration:
 
-![Throttling](screenshots/throttling.png)
+![Throttling](./screenshots/throttling.png)
 
 ---
 
@@ -63,7 +63,7 @@ Features enabled:
 
 Example rule:
 
-![WAF Rate Limit](screenshots/waf.png)
+![WAF Rate Limit](./screenshots/waf.png)
 
 ---
 
@@ -73,7 +73,7 @@ After successful login the system issues a JWT token used to access protected en
 
 Example request:
 
-![Login Test](screenshots/login-test.png)
+![Login Test](./screenshots/login-test.png)
 
 ---
 
