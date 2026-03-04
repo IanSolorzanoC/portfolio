@@ -63,7 +63,7 @@ Features enabled:
 
 Example rule:
 
-![WAF Rate Limit](./screenshots/waf.png)
+![WAF Rate Limit](./screenshots/waf-rate-limit.png)
 
 ---
 
