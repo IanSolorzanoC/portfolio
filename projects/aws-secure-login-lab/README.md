@@ -8,7 +8,7 @@ This lab simulates a login API protected with multiple defensive layers includin
 
 # Architecture
 
-![Architecture](./architecture/architecture.png)
+<img src="./architecture/architecture.png" width="800">
 
 Flow:
 
