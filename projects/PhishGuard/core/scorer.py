@@ -1,4 +1,4 @@
-﻿"""Scoring engine and orchestration for PhishGuard."""
+"""Scoring engine and orchestration for PhishGuard."""
 
 from __future__ import annotations
 
@@ -31,14 +31,7 @@ class PhishGuardAnalyzer:
     """Main URL threat analyzer using deterministic heuristic scoring."""
 
     def analyze(self, url: str) -> ThreatReport:
-        """Analyze a URL and return a structured risk report.
-
-        Args:
-            url: URL to inspect.
-
-        Returns:
-            ThreatReport with risk score, confidence, and detected signals.
-        """
+        """Analyze a URL and return a structured risk report."""
         parsed = parse_url(url)
         domain = analyze_domain(parsed)
         network = collect_network_info(parsed.normalized_url)
@@ -55,11 +48,12 @@ class PhishGuardAnalyzer:
         counterweight_signals = generate_counterweight_signals(context)
 
         adjusted_risk_signals = self._apply_tier_c_gate(risk_signals)
+
         risk_score = self._compute_score(adjusted_risk_signals, counterweight_signals)
         classification = self._classify(risk_score)
-        confidence = self._compute_confidence(adjusted_risk_signals)
 
         all_signals = adjusted_risk_signals + counterweight_signals
+        confidence = self._compute_confidence(all_signals)
 
         return ThreatReport(
             url=parsed.normalized_url,
@@ -97,7 +91,6 @@ class PhishGuardAnalyzer:
 
         reduction_needed = tier_c_total - tier_c_cap
 
-        # Deterministic reduction from newest/least critical weak signals first.
         for index in reversed(tier_c_indices):
             if reduction_needed <= 0:
                 break
@@ -126,11 +119,15 @@ class PhishGuardAnalyzer:
             return "HIGH"
         return "CRITICAL"
 
-    def _compute_confidence(self, risk_signals: list[Signal]) -> float:
-        """Compute confidence from number of tiered positive signals."""
-        tier_a_count = sum(1 for signal in risk_signals if signal.tier == "A" and signal.impact > 0)
-        tier_b_count = sum(1 for signal in risk_signals if signal.tier == "B" and signal.impact > 0)
-        tier_c_count = sum(1 for signal in risk_signals if signal.tier == "C" and signal.impact > 0)
+    def _compute_confidence(self, signals: list[Signal]) -> float:
+        """
+        Compute confidence based on total evidence strength.
+        Both positive (risk) and negative (counterweight) signals
+        contribute to certainty of the verdict.
+        """
+        tier_a_count = sum(1 for signal in signals if signal.tier == "A")
+        tier_b_count = sum(1 for signal in signals if signal.tier == "B")
+        tier_c_count = sum(1 for signal in signals if signal.tier == "C")
 
         confidence = (
             BASE_CONFIDENCE
@@ -138,6 +135,7 @@ class PhishGuardAnalyzer:
             + CONF_TIER_B * tier_b_count
             + CONF_TIER_C * tier_c_count
         )
+
         return min(MAX_CONFIDENCE, round(confidence, 4))
 
 
