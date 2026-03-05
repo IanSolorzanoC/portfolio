@@ -1,6 +1,22 @@
-﻿"""Heuristic signal generation for phishing risk detection."""
+"""Heuristic signal generation for phishing risk detection."""
 
 from __future__ import annotations
+
+from datetime import datetime, timezone
+import re
+
+import requests
+from requests import exceptions as requests_exceptions
+
+try:
+    import Levenshtein  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - optional dependency fallback
+    Levenshtein = None
+
+try:
+    import whois  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - optional dependency fallback
+    whois = None
 
 from core.domain_analyzer import detect_brand_impersonation
 from core.models import AnalysisContext, Signal
@@ -35,6 +51,209 @@ from utils.constants import (
     URL_SHORTENERS,
 )
 
+TYPOSQUATTING_BRANDS: tuple[str, ...] = (
+    "paypal",
+    "microsoft",
+    "google",
+    "apple",
+    "amazon",
+    "facebook",
+    "instagram",
+    "linkedin",
+    "netflix",
+)
+
+PHISHING_KEYWORDS: tuple[str, ...] = (
+    "login",
+    "verify",
+    "secure",
+    "account",
+    "update",
+    "bank",
+    "wallet",
+    "confirm",
+    "password",
+    "signin",
+)
+
+SUSPICIOUS_TLDS: set[str] = {
+    "xyz",
+    "top",
+    "click",
+    "gq",
+    "ml",
+    "cf",
+    "work",
+    "support",
+    "zip",
+}
+
+
+def _levenshtein_distance(left: str, right: str) -> int:
+    """Compute Levenshtein distance, with fallback if library is unavailable."""
+    if Levenshtein is not None:
+        return int(Levenshtein.distance(left, right))
+
+    if left == right:
+        return 0
+    if not left:
+        return len(right)
+    if not right:
+        return len(left)
+
+    previous = list(range(len(right) + 1))
+    for i, left_char in enumerate(left, start=1):
+        current = [i]
+        for j, right_char in enumerate(right, start=1):
+            insertion = previous[j] + 1
+            deletion = current[j - 1] + 1
+            substitution = previous[j - 1] + (left_char != right_char)
+            current.append(min(insertion, deletion, substitution))
+        previous = current
+    return previous[-1]
+
+
+def _extract_typosquat_tokens(hostname: str) -> list[str]:
+    """Extract normalized candidate tokens from second-level domain."""
+    labels = [label for label in hostname.lower().split(".") if label]
+    second_level = labels[-2] if len(labels) >= 2 else (labels[0] if labels else "")
+    if not second_level:
+        return []
+
+    tokens = [token for token in re.split(r"[^a-z0-9]+", second_level) if token]
+    return tokens or [second_level]
+
+
+def detect_typosquatting(hostname: str) -> Signal | None:
+    """Detect brand-imitating domains via Levenshtein distance of one."""
+    if not hostname:
+        return None
+
+    try:
+        tokens = _extract_typosquat_tokens(hostname)
+        for token in tokens:
+            for brand in TYPOSQUATTING_BRANDS:
+                if _levenshtein_distance(token, brand) == 1:
+                    return Signal(
+                        id="typosquatting_detected",
+                        description="Domain resembles popular brand",
+                        tier="A",
+                        impact=30,
+                        evidence=f"{token} similar to {brand}",
+                    )
+    except Exception:
+        return None
+    return None
+
+
+def _normalize_creation_date(value: object) -> datetime | None:
+    """Normalize WHOIS creation_date into timezone-aware UTC datetime."""
+    if value is None:
+        return None
+
+    if isinstance(value, list):
+        normalized = [item for item in (_normalize_creation_date(v) for v in value) if item is not None]
+        return min(normalized) if normalized else None
+
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    if isinstance(value, str):
+        cleaned = value.strip().replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(cleaned)
+            if parsed.tzinfo is None:
+                return parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    return None
+
+
+def detect_young_domain(hostname: str) -> Signal | None:
+    """Detect recently registered domains using WHOIS creation date."""
+    if not hostname or whois is None:
+        return None
+
+    try:
+        result = whois.whois(hostname)
+        creation_date = _normalize_creation_date(getattr(result, "creation_date", None))
+        if creation_date is None:
+            return None
+
+        now_utc = datetime.now(timezone.utc)
+        age_days = (now_utc - creation_date).days
+        if 0 <= age_days < 30:
+            return Signal(
+                id="young_domain",
+                description="Domain registered recently",
+                tier="A",
+                impact=25,
+                evidence=f"Domain age {age_days} days",
+            )
+    except Exception:
+        return None
+    return None
+
+
+def detect_phishing_keywords(url: str) -> Signal | None:
+    """Detect phishing-themed words in the normalized URL."""
+    lowered = url.lower()
+    matches = [keyword for keyword in PHISHING_KEYWORDS if keyword in lowered]
+    if not matches:
+        return None
+
+    return Signal(
+        id="phishing_keywords",
+        description="Phishing-related keywords detected in URL",
+        tier="B",
+        impact=10,
+        evidence=", ".join(matches),
+    )
+
+
+def detect_suspicious_tld(hostname: str) -> Signal | None:
+    """Detect TLDs frequently abused in phishing campaigns."""
+    labels = [label for label in hostname.lower().split(".") if label]
+    if len(labels) < 2:
+        return None
+
+    tld = labels[-1]
+    if tld not in SUSPICIOUS_TLDS:
+        return None
+
+    return Signal(
+        id="suspicious_tld",
+        description="TLD frequently abused in phishing campaigns",
+        tier="C",
+        impact=6,
+        evidence=f"TLD: .{tld}",
+    )
+
+
+def detect_redirect_chain(url: str) -> Signal | None:
+    """Detect suspicious multi-hop redirect chains from the target URL."""
+    try:
+        response = requests.get(url, allow_redirects=True, timeout=5)
+    except requests_exceptions.RequestException:
+        return None
+    except Exception:
+        return None
+
+    redirects = len(response.history)
+    if redirects >= 3:
+        return Signal(
+            id="redirect_chain",
+            description="Multiple redirects detected",
+            tier="B",
+            impact=12,
+            evidence=f"{redirects} redirects observed",
+        )
+    return None
+
 
 def generate_risk_signals(context: AnalysisContext) -> list[Signal]:
     """Generate positive risk signals across tier A/B/C heuristics."""
@@ -44,6 +263,29 @@ def generate_risk_signals(context: AnalysisContext) -> list[Signal]:
     ssl_info = context.ssl_info
 
     signals: list[Signal] = []
+
+    url = parsed.normalized_url
+    hostname = parsed.hostname
+
+    typosquatting_signal = detect_typosquatting(hostname)
+    if typosquatting_signal:
+        signals.append(typosquatting_signal)
+
+    young_domain_signal = detect_young_domain(hostname)
+    if young_domain_signal:
+        signals.append(young_domain_signal)
+
+    phishing_keywords_signal = detect_phishing_keywords(url)
+    if phishing_keywords_signal:
+        signals.append(phishing_keywords_signal)
+
+    suspicious_tld_signal = detect_suspicious_tld(hostname)
+    if suspicious_tld_signal:
+        signals.append(suspicious_tld_signal)
+
+    redirect_chain_signal = detect_redirect_chain(url)
+    if redirect_chain_signal:
+        signals.append(redirect_chain_signal)
 
     # Tier A: strong signals
     if parsed.is_ip:
