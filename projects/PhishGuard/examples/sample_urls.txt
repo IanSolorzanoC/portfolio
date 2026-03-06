@@ -1,0 +1,10 @@
+﻿# Benign examples
+https://github.com/login
+https://accounts.google.com
+https://apple.com
+
+# Suspicious examples
+http://192.168.1.25/verify/login
+https://paypal-login.xyz/security/update
+http://xn--pple-43d.example.click/secure
+https://bit.ly/3abcXYZ
