@@ -11,9 +11,6 @@ from core.ssl_checker import inspect_ssl
 from core.url_parser import parse_url
 from utils.constants import (
     BASE_CONFIDENCE,
-    CONF_TIER_A,
-    CONF_TIER_B,
-    CONF_TIER_C,
     HIGH_MAX,
     LOW_MAX,
     MAX_CONFIDENCE,
@@ -31,7 +28,14 @@ class PhishGuardAnalyzer:
     """Main URL threat analyzer using deterministic heuristic scoring."""
 
     def analyze(self, url: str) -> ThreatReport:
-        """Analyze a URL and return a structured risk report."""
+        """Analyze a URL and return a structured risk report.
+
+        Args:
+            url: URL to inspect.
+
+        Returns:
+            ThreatReport with risk score, confidence, and detected signals.
+        """
         parsed = parse_url(url)
         domain = analyze_domain(parsed)
         network = collect_network_info(parsed.normalized_url)
@@ -48,12 +52,11 @@ class PhishGuardAnalyzer:
         counterweight_signals = generate_counterweight_signals(context)
 
         adjusted_risk_signals = self._apply_tier_c_gate(risk_signals)
-
         risk_score = self._compute_score(adjusted_risk_signals, counterweight_signals)
         classification = self._classify(risk_score)
 
         all_signals = adjusted_risk_signals + counterweight_signals
-        confidence = self._compute_confidence(all_signals)
+        confidence = self._compute_confidence(all_signals, risk_score)
 
         return ThreatReport(
             url=parsed.normalized_url,
@@ -91,6 +94,7 @@ class PhishGuardAnalyzer:
 
         reduction_needed = tier_c_total - tier_c_cap
 
+        # Deterministic reduction from newest/least critical weak signals first.
         for index in reversed(tier_c_indices):
             if reduction_needed <= 0:
                 break
@@ -119,23 +123,24 @@ class PhishGuardAnalyzer:
             return "HIGH"
         return "CRITICAL"
 
-    def _compute_confidence(self, signals: list[Signal]) -> float:
-        """
-        Compute confidence based on total evidence strength.
-        Both positive (risk) and negative (counterweight) signals
-        contribute to certainty of the verdict.
-        """
-        tier_a_count = sum(1 for signal in signals if signal.tier == "A")
-        tier_b_count = sum(1 for signal in signals if signal.tier == "B")
-        tier_c_count = sum(1 for signal in signals if signal.tier == "C")
+    def _compute_confidence(self, signals: list[Signal], risk_score: int) -> float:
+        """Compute confidence from evidence strength and distance from class boundaries."""
+        if not signals:
+            return BASE_CONFIDENCE
+
+        evidence_count = len(signals)
+        evidence_strength = sum(abs(signal.impact) for signal in signals)
+
+        boundaries = (LOW_MAX, MEDIUM_MAX, HIGH_MAX)
+        nearest_boundary_distance = min(abs(risk_score - boundary) for boundary in boundaries)
+        normalized_margin = min(1.0, nearest_boundary_distance / 25.0)
 
         confidence = (
             BASE_CONFIDENCE
-            + CONF_TIER_A * tier_a_count
-            + CONF_TIER_B * tier_b_count
-            + CONF_TIER_C * tier_c_count
+            + min(0.30, evidence_count * 0.08)
+            + min(0.25, evidence_strength / 80.0)
+            + 0.10 * normalized_margin
         )
-
         return min(MAX_CONFIDENCE, round(confidence, 4))
 
 
